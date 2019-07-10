@@ -37,3 +37,24 @@ const countCart = (tags) => {
     })
     return countTag;
 }
+
+const getItem = (barcode, items) => {
+    for (let i = 0; i < items.length; i++) {
+        if (barcode == items[i].barcode)
+            return Object.assign({}, items[i]);
+    }
+    return null;
+}
+
+const getCart = countTag => {
+    const items = loadAllItems();
+    const cart = [];
+    countTag.forEach(tag => {
+        let item = getItem(tag.id, items);
+        if (item != null) {
+            item.count = tag.count;
+            cart.push(item);
+        }
+    })
+    return cart;
+}
