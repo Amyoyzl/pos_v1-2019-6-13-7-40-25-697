@@ -1,31 +1,17 @@
 'use strict';
 
 
-const addCountTag = (countTag, tag, count) => {
-    let index = indexOfCountTag(tag, countTag);
-    if (index >= 0) {
-        countTag[index].count += count;
-    } else {
-        countTag.push({ 'id': tag, 'count': count });
-    }
-}
-const indexOfCountTag = (id, countTag) => {
-    return countTag.findIndex((tag, index, arr) => {
-        return tag.id == id;
-    });
-}
 const countCart = (tags) => {
-    const countTag = [];
-    tags.forEach(tag => {
+    return tags.reduce((countTag, tag) => {
         let tagArr = tag.split('-');
         if (tagArr.length == 1)
-            addCountTag(countTag, tag, 1);
-        else
-            addCountTag(countTag, tagArr[0], Number(tagArr[1]));
-    })
-    return countTag;
+            countTag[tag] = countTag[tag] ? (countTag[tag] + 1) : 1;
+        else {
+            countTag[tagArr[0]] = countTag[tagArr[0]] ? (countTag[tagArr[0]] + Number(tagArr[1])) : Number(tagArr[1]);
+        }
+        return countTag;
+    }, {});
 }
-
 
 const getItem = (barcode, items) => {
     return items.find(item => {
@@ -33,26 +19,24 @@ const getItem = (barcode, items) => {
     })
 }
 
-const isPromotions = (barcodes, barcode) => {
-    return barcodes.includes(barcode);
+const computerPromotion = (item, promotions) => {
+    if (promotions[0].barcodes.includes(item.barcode))
+        return Math.floor(item.count / 3) * item.price;
+    return 0;
 }
 
 const getCart = countTag => {
     const items = loadAllItems();
     const promotions = loadPromotions();
     const cart = [];
-    countTag.forEach(tag => {
-        let item = getItem(tag.id, items);
+    for (let barcode in countTag) {
+        let item = getItem(barcode, items);
         if (item != undefined) {
-            item.count = tag.count;
-            item.total = item.price * item.count;
-            // 有优惠
-            if (isPromotions(promotions[0].barcodes, tag.id)) {
-                item.total = item.total - Math.floor(item.count / 3) * item.price;
-            }
+            item.count = countTag[barcode];
+            item.total = item.price * item.count - computerPromotion(item, promotions);
             cart.push(item);
         }
-    })
+    }
     return cart;
 }
 
